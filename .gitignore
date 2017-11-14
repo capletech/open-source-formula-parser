@@ -6,6 +6,5 @@ coverage
 tmp/
 lib
 es
-coverage
 
 dev.html
