@@ -1,0 +1,21 @@
+stages:
+  - build
+  - deploy
+
+# for now very simple, an all-in-one step
+build:package:
+  image: caple/platform-build-agent:1
+  stage: build
+  only:
+    - master
+    - /^release\/.*$/
+    - /^feature\/.*$/
+  script:
+    - npm run test && npm run prepublish
+  artifacts:
+    name: caple-formula-parser-$CI_BUILD_REF_NAME
+    paths:
+      - dist
+  tags:
+    - gitlab1
+    - docker
