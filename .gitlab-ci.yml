@@ -11,7 +11,7 @@ build:package:
     - /^release\/.*$/
     - /^feature\/.*$/
   script:
-    - npm run test && npm run prepublish
+    - npm install && npm run test && npm run prepublish
   artifacts:
     name: caple-formula-parser-$CI_BUILD_REF_NAME
     paths:
