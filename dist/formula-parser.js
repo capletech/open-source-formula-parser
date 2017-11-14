@@ -469,7 +469,7 @@ function invertNumber(number) {
 var utils = __webpack_require__(1);
 var error = __webpack_require__(0);
 var statistical = __webpack_require__(5);
-var information = __webpack_require__(7);
+var information = __webpack_require__(8);
 
 exports.ABS = function(number) {
   number = utils.parseNumber(number);
@@ -3430,7 +3430,7 @@ exports.Z.TEST = function(range, x, sd) {
 
 var utils = __webpack_require__(1);
 var error = __webpack_require__(0);
-var numbro = __webpack_require__(9);
+var numbro = __webpack_require__(10);
 
 //TODO
 exports.ASC = function() {
@@ -3767,6 +3767,196 @@ exports.VALUE = function(text) {
 
 /***/ }),
 /* 7 */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var error = __webpack_require__(0);
@@ -3905,7 +4095,7 @@ exports.TYPE = function(value) {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var error = __webpack_require__(0);
@@ -4464,7 +4654,7 @@ function serial(date) {
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -5762,197 +5952,7 @@ function serial(date) {
 
 }.call(typeof window === 'undefined' ? this : window));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10)))
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 11 */
@@ -10662,7 +10662,7 @@ jStat.models = (function(){
 /***/ (function(module, exports, __webpack_require__) {
 
 var utils = __webpack_require__(1);
-var numbro = __webpack_require__(9);
+var numbro = __webpack_require__(10);
 var error = __webpack_require__(0);
 
 exports.UNIQUE = function () {
@@ -12304,7 +12304,7 @@ exports.OCT2HEX = function(number, places) {
 
 
 exports.__esModule = true;
-var SUPPORTED_FORMULAS = ['ABS', 'ACCRINT', 'ACOS', 'ACOSH', 'ACOT', 'ACOTH', 'ADD', 'AGGREGATE', 'AND', 'ARABIC', 'ARGS2ARRAY', 'ASIN', 'ASINH', 'ATAN', 'ATAN2', 'ATANH', 'AVEDEV', 'AVERAGE', 'AVERAGEA', 'AVERAGEIF', 'AVERAGEIFS', 'BASE', 'BESSELI', 'BESSELJ', 'BESSELK', 'BESSELY', 'BETA.DIST', 'BETA.INV', 'BETADIST', 'BETAINV', 'BIN2DEC', 'BIN2HEX', 'BIN2OCT', 'BINOM.DIST', 'BINOM.DIST.RANGE', 'BINOM.INV', 'BINOMDIST', 'BITAND', 'BITLSHIFT', 'BITOR', 'BITRSHIFT', 'BITXOR', 'CEILING', 'CEILINGMATH', 'CEILINGPRECISE', 'CHAR', 'CHISQ.DIST', 'CHISQ.DIST.RT', 'CHISQ.INV', 'CHISQ.INV.RT', 'CHOOSE', 'CHOOSE', 'CLEAN', 'CODE', 'COLUMN', 'COLUMNS', 'COMBIN', 'COMBINA', 'COMPLEX', 'CONCATENATE', 'CONFIDENCE', 'CONFIDENCE.NORM', 'CONFIDENCE.T', 'CONVERT', 'CORREL', 'COS', 'COSH', 'COT', 'COTH', 'COUNT', 'COUNTA', 'COUNTBLANK', 'COUNTIF', 'COUNTIFS', 'COUNTIN', 'COUNTUNIQUE', 'COVARIANCE.P', 'COVARIANCE.S', 'CSC', 'CSCH', 'CUMIPMT', 'CUMPRINC', 'DATE', 'DATEVALUE', 'DAY', 'DAYS', 'DAYS360', 'DB', 'DDB', 'DEC2BIN', 'DEC2HEX', 'DEC2OCT', 'DECIMAL', 'DEGREES', 'DELTA', 'DEVSQ', 'DIVIDE', 'DOLLAR', 'DOLLARDE', 'DOLLARFR', 'E', 'EDATE', 'EFFECT', 'EOMONTH', 'EQ', 'ERF', 'ERFC', 'EVEN', 'EXACT', 'EXP', 'EXPON.DIST', 'EXPONDIST', 'F.DIST', 'F.DIST.RT', 'F.INV', 'F.INV.RT', 'FACT', 'FACTDOUBLE', 'FALSE', 'FDIST', 'FDISTRT', 'FIND', 'FINV', 'FINVRT', 'FISHER', 'FISHERINV', 'FIXED', 'FLATTEN', 'FLOOR', 'FORECAST', 'FREQUENCY', 'FV', 'FVSCHEDULE', 'GAMMA', 'GAMMA.DIST', 'GAMMA.INV', 'GAMMADIST', 'GAMMAINV', 'GAMMALN', 'GAMMALN.PRECISE', 'GAUSS', 'GCD', 'GEOMEAN', 'GESTEP', 'GROWTH', 'GTE', 'HARMEAN', 'HEX2BIN', 'HEX2DEC', 'HEX2OCT', 'HOUR', 'HTML2TEXT', 'HYPGEOM.DIST', 'HYPGEOMDIST', 'IF', 'IMABS', 'IMAGINARY', 'IMARGUMENT', 'IMCONJUGATE', 'IMCOS', 'IMCOSH', 'IMCOT', 'IMCSC', 'IMCSCH', 'IMDIV', 'IMEXP', 'IMLN', 'IMLOG10', 'IMLOG2', 'IMPOWER', 'IMPRODUCT', 'IMREAL', 'IMSEC', 'IMSECH', 'IMSIN', 'IMSINH', 'IMSQRT', 'IMSUB', 'IMSUM', 'IMTAN', 'INT', 'INTERCEPT', 'INTERVAL', 'IPMT', 'IRR', 'ISBINARY', 'ISBLANK', 'ISEVEN', 'ISLOGICAL', 'ISNONTEXT', 'ISNUMBER', 'ISODD', 'ISODD', 'ISOWEEKNUM', 'ISPMT', 'ISTEXT', 'JOIN', 'KURT', 'LARGE', 'LCM', 'LEFT', 'LEN', 'LINEST', 'LN', 'LOG', 'LOG10', 'LOGEST', 'LOGNORM.DIST', 'LOGNORM.INV', 'LOGNORMDIST', 'LOGNORMINV', 'LOWER', 'LT', 'LTE', 'MATCH', 'MAX', 'MAXA', 'MEDIAN', 'MID', 'MIN', 'MINA', 'MINUS', 'MINUTE', 'MIRR', 'MOD', 'MODE.MULT', 'MODE.SNGL', 'MODEMULT', 'MODESNGL', 'MONTH', 'MROUND', 'MULTINOMIAL', 'MULTIPLY', 'NE', 'NEGBINOM.DIST', 'NEGBINOMDIST', 'NETWORKDAYS', 'NOMINAL', 'NORM.DIST', 'NORM.INV', 'NORM.S.DIST', 'NORM.S.INV', 'NORMDIST', 'NORMINV', 'NORMSDIST', 'NORMSINV', 'NOT', 'NOW', 'NPER', 'NPV', 'NUMBERS', 'NUMERAL', 'OCT2BIN', 'OCT2DEC', 'OCT2HEX', 'ODD', 'OR', 'PDURATION', 'PEARSON', 'PERCENTILEEXC', 'PERCENTILEINC', 'PERCENTRANKEXC', 'PERCENTRANKINC', 'PERMUT', 'PERMUTATIONA', 'PHI', 'PI', 'PMT', 'POISSON.DIST', 'POISSONDIST', 'POW', 'POWER', 'PPMT', 'PROB', 'PRODUCT', 'PROPER', 'PV', 'QUARTILE.EXC', 'QUARTILE.INC', 'QUARTILEEXC', 'QUARTILEINC', 'QUOTIENT', 'RADIANS', 'RAND', 'RANDBETWEEN', 'RANK.AVG', 'RANK.EQ', 'RANKAVG', 'RANKEQ', 'RATE', 'REFERENCE', 'REGEXEXTRACT', 'REGEXMATCH', 'REGEXREPLACE', 'REPLACE', 'REPT', 'RIGHT', 'ROMAN', 'ROUND', 'ROUNDDOWN', 'ROUNDUP', 'ROW', 'ROWS', 'RRI', 'RSQ', 'SEARCH', 'SEC', 'SECH', 'SECOND', 'SERIESSUM', 'SIGN', 'SIN', 'SINH', 'SKEW', 'SKEW.P', 'SKEWP', 'SLN', 'SLOPE', 'SMALL', 'SPLIT', 'SPLIT', 'SQRT', 'SQRTPI', 'STANDARDIZE', 'STDEV.P', 'STDEV.S', 'STDEVA', 'STDEVP', 'STDEVPA', 'STDEVS', 'STEYX', 'SUBSTITUTE', 'SUBTOTAL', 'SUM', 'SUMIF', 'SUMIFS', 'SUMPRODUCT', 'SUMSQ', 'SUMX2MY2', 'SUMX2PY2', 'SUMXMY2', 'SWITCH', 'SYD', 'T', 'T.DIST', 'T.DIST.2T', 'T.DIST.RT', 'T.INV', 'T.INV.2T', 'TAN', 'TANH', 'TBILLEQ', 'TBILLPRICE', 'TBILLYIELD', 'TDIST', 'TDIST2T', 'TDISTRT', 'TEXT', 'TIME', 'TIMEVALUE', 'TINV', 'TINV2T', 'TODAY', 'TRANSPOSE', 'TREND', 'TRIM', 'TRIMMEAN', 'TRUE', 'TRUNC', 'UNICHAR', 'UNICODE', 'UNIQUE', 'UPPER', 'VALUE', 'VAR.P', 'VAR.S', 'VARA', 'VARP', 'VARPA', 'VARS', 'WEEKDAY', 'WEEKNUM', 'WEIBULL.DIST', 'WEIBULLDIST', 'WORKDAY', 'XIRR', 'XNPV', 'XOR', 'YEAR', 'YEARFRAC'];
+var SUPPORTED_FORMULAS = ['ABS', 'ACCRINT', 'ACOS', 'ACOSH', 'ACOT', 'ACOTH', 'ADD', 'AGGREGATE', 'AND', 'ARABIC', 'ARGS2ARRAY', 'ASIN', 'ASINH', 'ATAN', 'ATAN2', 'ATANH', 'AVEDEV', 'AVERAGE', 'AVERAGEA', 'AVERAGEIF', 'AVERAGEIFS', 'BASE', 'BESSELI', 'BESSELJ', 'BESSELK', 'BESSELY', 'BETA.DIST', 'BETA.INV', 'BETADIST', 'BETAINV', 'BIN2DEC', 'BIN2HEX', 'BIN2OCT', 'BINOM.DIST', 'BINOM.DIST.RANGE', 'BINOM.INV', 'BINOMDIST', 'BITAND', 'BITLSHIFT', 'BITOR', 'BITRSHIFT', 'BITXOR', 'CEILING', 'CEILINGMATH', 'CEILINGPRECISE', 'CHAR', 'CHISQ.DIST', 'CHISQ.DIST.RT', 'CHISQ.INV', 'CHISQ.INV.RT', 'CHOOSE', 'CHOOSE', 'CLEAN', 'CODE', 'COLUMN', 'COLUMNS', 'COMBIN', 'COMBINA', 'COMPLEX', 'CONCATENATE', 'CONFIDENCE', 'CONFIDENCE.NORM', 'CONFIDENCE.T', 'CONVERT', 'CORREL', 'COS', 'COSH', 'COT', 'COTH', 'COUNT', 'COUNTA', 'COUNTBLANK', 'COUNTIF', 'COUNTIFS', 'COUNTIN', 'COUNTUNIQUE', 'COVARIANCE.P', 'COVARIANCE.S', 'CSC', 'CSCH', 'CUMIPMT', 'CUMPRINC', 'DATE', 'DATEVALUE', 'DAY', 'DAYS', 'DAYS360', 'DB', 'DDB', 'DEC2BIN', 'DEC2HEX', 'DEC2OCT', 'DECIMAL', 'DEGREES', 'DELTA', 'DEVSQ', 'DIVIDE', 'DOLLAR', 'DOLLARDE', 'DOLLARFR', 'E', 'EDATE', 'EFFECT', 'EOMONTH', 'EQ', 'ERF', 'ERFC', 'EVEN', 'EXACT', 'EXP', 'EXPON.DIST', 'EXPONDIST', 'F.DIST', 'F.DIST.RT', 'F.INV', 'F.INV.RT', 'FACT', 'FACTDOUBLE', 'FALSE', 'FDIST', 'FDISTRT', 'FIND', 'FINV', 'FINVRT', 'FISHER', 'FISHERINV', 'FIXED', 'FLATTEN', 'FLOOR', 'FORECAST', 'FREQUENCY', 'FV', 'FVSCHEDULE', 'GAMMA', 'GAMMA.DIST', 'GAMMA.INV', 'GAMMADIST', 'GAMMAINV', 'GAMMALN', 'GAMMALN.PRECISE', 'GAUSS', 'GCD', 'GEOMEAN', 'GESTEP', 'GROWTH', 'GTE', 'HARMEAN', 'HEX2BIN', 'HEX2DEC', 'HEX2OCT', 'HOUR', 'HLOOKUP', 'HTML2TEXT', 'HYPGEOM.DIST', 'HYPGEOMDIST', 'IF', 'IFERROR', 'IFNA', 'IMABS', 'IMAGINARY', 'IMARGUMENT', 'IMCONJUGATE', 'IMCOS', 'IMCOSH', 'IMCOT', 'IMCSC', 'IMCSCH', 'IMDIV', 'IMEXP', 'IMLN', 'IMLOG10', 'IMLOG2', 'IMPOWER', 'IMPRODUCT', 'IMREAL', 'IMSEC', 'IMSECH', 'IMSIN', 'IMSINH', 'IMSQRT', 'IMSUB', 'IMSUM', 'IMTAN', 'INT', 'INTERCEPT', 'INTERVAL', 'IPMT', 'IRR', 'ISBINARY', 'ISBLANK', 'ISEVEN', 'ISLOGICAL', 'ISNONTEXT', 'ISNUMBER', 'ISODD', 'ISODD', 'ISOWEEKNUM', 'ISPMT', 'ISTEXT', 'JOIN', 'KURT', 'LARGE', 'LCM', 'LEFT', 'LEN', 'LINEST', 'LN', 'LOG', 'LOG10', 'LOGEST', 'LOGNORM.DIST', 'LOGNORM.INV', 'LOGNORMDIST', 'LOGNORMINV', 'LOWER', 'LT', 'LTE', 'MATCH', 'MAX', 'MAXA', 'MEDIAN', 'MID', 'MIN', 'MINA', 'MINUS', 'MINUTE', 'MIRR', 'MOD', 'MODE.MULT', 'MODE.SNGL', 'MODEMULT', 'MODESNGL', 'MONTH', 'MROUND', 'MULTINOMIAL', 'MULTIPLY', 'NA', 'NE', 'NEGBINOM.DIST', 'NEGBINOMDIST', 'NETWORKDAYS', 'NOMINAL', 'NORM.DIST', 'NORM.INV', 'NORM.S.DIST', 'NORM.S.INV', 'NORMDIST', 'NORMINV', 'NORMSDIST', 'NORMSINV', 'NOT', 'NOW', 'NPER', 'NPV', 'NUMBERS', 'NUMERAL', 'OCT2BIN', 'OCT2DEC', 'OCT2HEX', 'ODD', 'OR', 'PDURATION', 'PEARSON', 'PERCENTILEEXC', 'PERCENTILEINC', 'PERCENTRANKEXC', 'PERCENTRANKINC', 'PERMUT', 'PERMUTATIONA', 'PHI', 'PI', 'PMT', 'POISSON.DIST', 'POISSONDIST', 'POW', 'POWER', 'PPMT', 'PROB', 'PRODUCT', 'PROPER', 'PV', 'QUARTILE.EXC', 'QUARTILE.INC', 'QUARTILEEXC', 'QUARTILEINC', 'QUOTIENT', 'RADIANS', 'RAND', 'RANDBETWEEN', 'RANK.AVG', 'RANK.EQ', 'RANKAVG', 'RANKEQ', 'RATE', 'REFERENCE', 'REGEXEXTRACT', 'REGEXMATCH', 'REGEXREPLACE', 'REPLACE', 'REPT', 'RIGHT', 'ROMAN', 'ROUND', 'ROUNDDOWN', 'ROUNDUP', 'ROW', 'ROWS', 'RRI', 'RSQ', 'SEARCH', 'SEC', 'SECH', 'SECOND', 'SERIESSUM', 'SIGN', 'SIN', 'SINH', 'SKEW', 'SKEW.P', 'SKEWP', 'SLN', 'SLOPE', 'SMALL', 'SPLIT', 'SPLIT', 'SQRT', 'SQRTPI', 'STANDARDIZE', 'STDEV.P', 'STDEV.S', 'STDEVA', 'STDEVP', 'STDEVPA', 'STDEVS', 'STEYX', 'SUBSTITUTE', 'SUBTOTAL', 'SUM', 'SUMIF', 'SUMIFS', 'SUMPRODUCT', 'SUMSQ', 'SUMX2MY2', 'SUMX2PY2', 'SUMXMY2', 'SWITCH', 'SYD', 'T', 'T.DIST', 'T.DIST.2T', 'T.DIST.RT', 'T.INV', 'T.INV.2T', 'TAN', 'TANH', 'TBILLEQ', 'TBILLPRICE', 'TBILLYIELD', 'TDIST', 'TDIST2T', 'TDISTRT', 'TEXT', 'TIME', 'TIMEVALUE', 'TINV', 'TINV2T', 'TODAY', 'TRANSPOSE', 'TREND', 'TRIM', 'TRIMMEAN', 'TRUE', 'TRUNC', 'UNICHAR', 'UNICODE', 'UNIQUE', 'UPPER', 'VALUE', 'VAR.P', 'VAR.S', 'VARA', 'VARP', 'VARPA', 'VARS', 'VLOOKUP', 'WEEKDAY', 'WEEKNUM', 'WEIBULL.DIST', 'WEIBULLDIST', 'WORKDAY', 'XIRR', 'XNPV', 'XOR', 'YEAR', 'YEARFRAC'];
 
 exports['default'] = SUPPORTED_FORMULAS;
 
@@ -12504,7 +12504,7 @@ var _evaluateByOperator2 = _interopRequireDefault(_evaluateByOperator);
 
 var _grammarParser = __webpack_require__(41);
 
-var _string = __webpack_require__(43);
+var _string = __webpack_require__(45);
 
 var _number = __webpack_require__(3);
 
@@ -12548,11 +12548,11 @@ var Parser = function (_Emitter) {
       callFunction: function callFunction(name, params) {
         return _this._callFunction(name, params);
       },
-      cellValue: function cellValue(value) {
-        return _this._callCellValue(value);
+      cellValue: function cellValue(value, sheet) {
+        return _this._callCellValue(value, sheet);
       },
-      rangeValue: function rangeValue(start, end) {
-        return _this._callRangeValue(start, end);
+      rangeValue: function rangeValue(start, end, sheet) {
+        return _this._callRangeValue(start, end, sheet);
       }
     };
     _this.variables = Object.create(null);
@@ -12713,12 +12713,13 @@ var Parser = function (_Emitter) {
    * Retrieve value by its label (`B3`, `B$3`, `B$3`, `$B$3`).
    *
    * @param {String} label Coordinates.
+   * @param {String} sheet Reference sheet name
    * @returns {*}
    * @private
    */
 
 
-  Parser.prototype._callCellValue = function _callCellValue(label) {
+  Parser.prototype._callCellValue = function _callCellValue(label, sheet) {
     label = label.toUpperCase();
 
     var _extractLabel = (0, _cell.extractLabel)(label),
@@ -12727,7 +12728,8 @@ var Parser = function (_Emitter) {
 
     var value = void 0;
 
-    this.emit('callCellValue', { label: label, row: row, column: column }, function (_value) {
+    var cellCoordinate = sheet ? { label: label, row: row, column: column, sheet: sheet } : { label: label, row: row, column: column };
+    this.emit('callCellValue', cellCoordinate, function (_value) {
       value = _value;
     });
 
@@ -12739,12 +12741,13 @@ var Parser = function (_Emitter) {
    *
    * @param {String} startLabel Coordinates of the first cell.
    * @param {String} endLabel Coordinates of the last cell.
+   * @param {String} sheet Reference sheet name
    * @returns {Array} Returns an array of mixed values.
    * @private
    */
 
 
-  Parser.prototype._callRangeValue = function _callRangeValue(startLabel, endLabel) {
+  Parser.prototype._callRangeValue = function _callRangeValue(startLabel, endLabel, sheet) {
     startLabel = startLabel.toUpperCase();
     endLabel = endLabel.toUpperCase();
 
@@ -12777,6 +12780,11 @@ var Parser = function (_Emitter) {
 
     startCell.label = (0, _cell.toLabel)(startCell.row, startCell.column);
     endCell.label = (0, _cell.toLabel)(endCell.row, endCell.column);
+
+    if (sheet) {
+      startCell.sheet = sheet;
+      endCell.sheet = sheet;
+    }
 
     var value = [];
 
@@ -13200,9 +13208,9 @@ var categories = [
   __webpack_require__(30),
   __webpack_require__(4),
   __webpack_require__(6),
-  __webpack_require__(8),
+  __webpack_require__(9),
   __webpack_require__(31),
-  __webpack_require__(7),
+  __webpack_require__(8),
   __webpack_require__(32),
   __webpack_require__(5),
   __webpack_require__(12)
@@ -13223,7 +13231,7 @@ for (var c in categories) {
 var mathTrig = __webpack_require__(4);
 var statistical = __webpack_require__(5);
 var engineering = __webpack_require__(13);
-var dateTime = __webpack_require__(8);
+var dateTime = __webpack_require__(9);
 
 function set(fn, root) {
   if (root) {
@@ -13929,7 +13937,7 @@ exports.DVARP = function(database, field, criteria) {
 
 var error = __webpack_require__(0);
 var utils = __webpack_require__(1);
-var information = __webpack_require__(7);
+var information = __webpack_require__(8);
 
 exports.AND = function() {
   var args = utils.flatten(arguments);
@@ -14045,7 +14053,7 @@ exports.SWITCH = function () {
 /***/ (function(module, exports, __webpack_require__) {
 
 var error = __webpack_require__(0);
-var dateTime = __webpack_require__(8);
+var dateTime = __webpack_require__(9);
 var utils = __webpack_require__(1);
 
 function validDate(d) {
@@ -15430,7 +15438,7 @@ func.SYMBOL = SYMBOL;
 /* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(module, process) {/* parser generated by jison 0.4.17 */
+/* WEBPACK VAR INJECTION */(function(process, module) {/* parser generated by jison 0.4.18 */
 /*
   Returns a Parser object of the following structure:
 
@@ -15504,12 +15512,12 @@ func.SYMBOL = SYMBOL;
   }
 */
 var grammarParser = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,5],$V1=[1,8],$V2=[1,6],$V3=[1,7],$V4=[1,9],$V5=[1,14],$V6=[1,15],$V7=[1,16],$V8=[1,12],$V9=[1,13],$Va=[1,17],$Vb=[1,19],$Vc=[1,20],$Vd=[1,21],$Ve=[1,22],$Vf=[1,23],$Vg=[1,24],$Vh=[1,25],$Vi=[1,26],$Vj=[1,27],$Vk=[1,28],$Vl=[5,9,10,11,13,14,15,16,17,18,19,20,29,30],$Vm=[5,9,10,11,13,14,15,16,17,18,19,20,29,30,32],$Vn=[5,9,10,11,13,14,15,16,17,18,19,20,29,30,34],$Vo=[5,10,11,13,14,15,16,17,29,30],$Vp=[5,10,13,14,15,16,29,30],$Vq=[5,10,11,13,14,15,16,17,18,19,29,30],$Vr=[13,29,30];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,5],$V1=[1,8],$V2=[1,6],$V3=[1,7],$V4=[1,9],$V5=[1,17],$V6=[1,18],$V7=[1,19],$V8=[1,20],$V9=[1,15],$Va=[1,16],$Vb=[1,21],$Vc=[1,23],$Vd=[1,24],$Ve=[1,25],$Vf=[1,26],$Vg=[1,27],$Vh=[1,28],$Vi=[1,29],$Vj=[1,30],$Vk=[1,31],$Vl=[1,32],$Vm=[5,9,10,11,13,14,15,16,17,18,19,20,34,35],$Vn=[5,9,10,11,13,14,15,16,17,18,19,20,34,35,37],$Vo=[5,9,10,11,13,14,15,16,17,18,19,20,34,35,39],$Vp=[5,10,11,13,14,15,16,17,34,35],$Vq=[5,10,13,14,15,16,34,35],$Vr=[5,10,11,13,14,15,16,17,18,19,34,35],$Vs=[13,34,35];
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"expressions":3,"expression":4,"EOF":5,"variableSequence":6,"number":7,"STRING":8,"&":9,"=":10,"+":11,"(":12,")":13,"<":14,">":15,"NOT":16,"-":17,"*":18,"/":19,"^":20,"FUNCTION":21,"expseq":22,"cell":23,"ABSOLUTE_CELL":24,"RELATIVE_CELL":25,"MIXED_CELL":26,":":27,"ARRAY":28,";":29,",":30,"VARIABLE":31,"DECIMAL":32,"NUMBER":33,"%":34,"ERROR":35,"$accept":0,"$end":1},
-terminals_: {5:"EOF",8:"STRING",9:"&",10:"=",11:"+",12:"(",13:")",14:"<",15:">",16:"NOT",17:"-",18:"*",19:"/",20:"^",21:"FUNCTION",24:"ABSOLUTE_CELL",25:"RELATIVE_CELL",26:"MIXED_CELL",27:":",28:"ARRAY",29:";",30:",",31:"VARIABLE",32:"DECIMAL",33:"NUMBER",34:"%",35:"ERROR"},
-productions_: [0,[3,2],[4,1],[4,1],[4,1],[4,3],[4,3],[4,3],[4,3],[4,4],[4,4],[4,4],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,2],[4,2],[4,3],[4,4],[4,1],[4,1],[4,2],[23,1],[23,1],[23,1],[23,3],[23,3],[23,3],[23,3],[23,3],[23,3],[23,3],[23,3],[23,3],[22,1],[22,1],[22,3],[22,3],[6,1],[6,3],[7,1],[7,3],[7,2],[2,1]],
+symbols_: {"error":2,"expressions":3,"expression":4,"EOF":5,"variableSequence":6,"number":7,"STRING":8,"&":9,"=":10,"+":11,"(":12,")":13,"<":14,">":15,"NOT":16,"-":17,"*":18,"/":19,"^":20,"FUNCTION":21,"expseq":22,"cell":23,"refCell":24,"range":25,"refRange":26,"ABSOLUTE_CELL":27,"RELATIVE_CELL":28,"MIXED_CELL":29,"REFSHEET":30,"!":31,":":32,"ARRAY":33,";":34,",":35,"VARIABLE":36,"DECIMAL":37,"NUMBER":38,"%":39,"ERROR":40,"$accept":0,"$end":1},
+terminals_: {5:"EOF",8:"STRING",9:"&",10:"=",11:"+",12:"(",13:")",14:"<",15:">",16:"NOT",17:"-",18:"*",19:"/",20:"^",21:"FUNCTION",27:"ABSOLUTE_CELL",28:"RELATIVE_CELL",29:"MIXED_CELL",30:"REFSHEET",31:"!",32:":",33:"ARRAY",34:";",35:",",36:"VARIABLE",37:"DECIMAL",38:"NUMBER",39:"%",40:"ERROR"},
+productions_: [0,[3,2],[4,1],[4,1],[4,1],[4,3],[4,3],[4,3],[4,3],[4,4],[4,4],[4,4],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,2],[4,2],[4,3],[4,4],[4,1],[4,1],[4,1],[4,1],[4,1],[4,2],[23,1],[23,1],[23,1],[24,3],[24,3],[24,3],[25,3],[25,3],[25,3],[25,3],[25,3],[25,3],[25,3],[25,3],[25,3],[26,5],[26,5],[26,5],[26,5],[26,5],[26,5],[26,5],[26,5],[26,5],[22,1],[22,1],[22,3],[22,3],[6,1],[6,3],[7,1],[7,3],[7,2],[2,1]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -15518,92 +15526,92 @@ switch (yystate) {
 case 1:
 
       return $$[$0-1];
-
+    
 break;
 case 2:
 
       this.$ = yy.callVariable($$[$0][0]);
-
+    
 break;
 case 3:
 
       this.$ = yy.toNumber($$[$0]);
-
+    
 break;
 case 4:
 
       this.$ = yy.trimEdges($$[$0]);
-
+    
 break;
 case 5:
 
       this.$ = yy.evaluateByOperator('&', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 6:
 
       this.$ = yy.evaluateByOperator('=', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 7:
 
       this.$ = yy.evaluateByOperator('+', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 8:
 
       this.$ = $$[$0-1];
-
+    
 break;
 case 9:
 
       this.$ = yy.evaluateByOperator('<=', [$$[$0-3], $$[$0]]);
-
+    
 break;
 case 10:
 
       this.$ = yy.evaluateByOperator('>=', [$$[$0-3], $$[$0]]);
-
+    
 break;
 case 11:
 
       this.$ = yy.evaluateByOperator('<>', [$$[$0-3], $$[$0]]);
-
+    
 break;
 case 12:
 
       this.$ = yy.evaluateByOperator('NOT', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 13:
 
       this.$ = yy.evaluateByOperator('>', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 14:
 
       this.$ = yy.evaluateByOperator('<', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 15:
 
       this.$ = yy.evaluateByOperator('-', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 16:
 
       this.$ = yy.evaluateByOperator('*', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 17:
 
       this.$ = yy.evaluateByOperator('/', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 18:
 
       this.$ = yy.evaluateByOperator('^', [$$[$0-2], $$[$0]]);
-
+    
 break;
 case 19:
 
@@ -15614,7 +15622,7 @@ case 19:
       if (isNaN(this.$)) {
           this.$ = 0;
       }
-
+    
 break;
 case 20:
 
@@ -15625,34 +15633,44 @@ case 20:
       if (isNaN(this.$)) {
           this.$ = 0;
       }
-
+    
 break;
 case 21:
 
       this.$ = yy.callFunction($$[$0-2]);
-
+    
 break;
 case 22:
 
       this.$ = yy.callFunction($$[$0-3], $$[$0-1]);
-
+    
 break;
-case 26: case 27: case 28:
+case 29: case 30: case 31:
 
       this.$ = yy.cellValue($$[$0]);
-
+    
 break;
-case 29: case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
+case 32: case 33: case 34:
+
+      this.$ = yy.cellValue($$[$0], $$[$0-2]);
+    
+break;
+case 35: case 36: case 37: case 38: case 39: case 40: case 41: case 42: case 43:
 
       this.$ = yy.rangeValue($$[$0-2], $$[$0]);
-
+    
 break;
-case 38: case 42:
+case 44: case 45: case 46: case 47: case 48: case 49: case 50: case 51: case 52:
+
+      this.$ = yy.rangeValue($$[$0-2], $$[$0], $$[$0-4]);
+    
+break;
+case 53: case 57:
 
       this.$ = [$$[$0]];
-
+    
 break;
-case 39:
+case 54:
 
       var result = [];
       var arr = eval("[" + yytext + "]");
@@ -15662,55 +15680,51 @@ case 39:
       });
 
       this.$ = result;
-
+    
 break;
-case 40: case 41:
+case 55: case 56:
 
       $$[$0-2].push($$[$0]);
       this.$ = $$[$0-2];
-
+    
 break;
-case 43:
+case 58:
 
       this.$ = (Array.isArray($$[$0-2]) ? $$[$0-2] : [$$[$0-2]]);
       this.$.push($$[$0]);
-
+    
 break;
-case 44:
+case 59:
 
       this.$ = $$[$0];
-
+    
 break;
-case 45:
+case 60:
 
       this.$ = ($$[$0-2] + '.' + $$[$0]) * 1;
-
+    
 break;
-case 46:
+case 61:
 
       this.$ = $$[$0-1] * 0.01;
-
+    
 break;
-case 47:
+case 62:
 
       this.$ = yy.throwError($$[$0]);
-
+    
 break;
 }
 },
-table: [{2:11,3:1,4:2,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{1:[3]},{5:[1,18],9:$Vb,10:$Vc,11:$Vd,14:$Ve,15:$Vf,16:$Vg,17:$Vh,18:$Vi,19:$Vj,20:$Vk},o($Vl,[2,2],{32:[1,29]}),o($Vl,[2,3],{34:[1,30]}),o($Vl,[2,4]),{2:11,4:31,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:32,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:33,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{12:[1,34]},o($Vl,[2,23]),o($Vl,[2,24],{2:35,35:$Va}),o($Vm,[2,42]),o($Vn,[2,44],{32:[1,36]}),o($Vl,[2,26],{27:[1,37]}),o($Vl,[2,27],{27:[1,38]}),o($Vl,[2,28],{27:[1,39]}),o([5,9,10,11,13,14,15,16,17,18,19,20,29,30,35],[2,47]),{1:[2,1]},{2:11,4:40,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:41,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:42,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:45,6:3,7:4,8:$V0,10:[1,43],11:$V1,12:$V2,15:[1,44],17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:47,6:3,7:4,8:$V0,10:[1,46],11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:48,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:49,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:50,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:51,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:52,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{31:[1,53]},o($Vn,[2,46]),{9:$Vb,10:$Vc,11:$Vd,13:[1,54],14:$Ve,15:$Vf,16:$Vg,17:$Vh,18:$Vi,19:$Vj,20:$Vk},o($Vo,[2,19],{9:$Vb,18:$Vi,19:$Vj,20:$Vk}),o($Vo,[2,20],{9:$Vb,18:$Vi,19:$Vj,20:$Vk}),{2:11,4:57,6:3,7:4,8:$V0,11:$V1,12:$V2,13:[1,55],17:$V3,21:$V4,22:56,23:10,24:$V5,25:$V6,26:$V7,28:[1,58],31:$V8,33:$V9,35:$Va},o($Vl,[2,25]),{33:[1,59]},{24:[1,60],25:[1,61],26:[1,62]},{24:[1,63],25:[1,64],26:[1,65]},{24:[1,66],25:[1,67],26:[1,68]},o($Vl,[2,5]),o([5,10,13,29,30],[2,6],{9:$Vb,11:$Vd,14:$Ve,15:$Vf,16:$Vg,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),o($Vo,[2,7],{9:$Vb,18:$Vi,19:$Vj,20:$Vk}),{2:11,4:69,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:70,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},o($Vp,[2,14],{9:$Vb,11:$Vd,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),{2:11,4:71,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},o($Vp,[2,13],{9:$Vb,11:$Vd,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),o([5,10,13,16,29,30],[2,12],{9:$Vb,11:$Vd,14:$Ve,15:$Vf,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),o($Vo,[2,15],{9:$Vb,18:$Vi,19:$Vj,20:$Vk}),o($Vq,[2,16],{9:$Vb,20:$Vk}),o($Vq,[2,17],{9:$Vb,20:$Vk}),o([5,10,11,13,14,15,16,17,18,19,20,29,30],[2,18],{9:$Vb}),o($Vm,[2,43]),o($Vl,[2,8]),o($Vl,[2,21]),{13:[1,72],29:[1,73],30:[1,74]},o($Vr,[2,38],{9:$Vb,10:$Vc,11:$Vd,14:$Ve,15:$Vf,16:$Vg,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),o($Vr,[2,39]),o($Vn,[2,45]),o($Vl,[2,29]),o($Vl,[2,30]),o($Vl,[2,31]),o($Vl,[2,32]),o($Vl,[2,33]),o($Vl,[2,34]),o($Vl,[2,35]),o($Vl,[2,36]),o($Vl,[2,37]),o($Vp,[2,9],{9:$Vb,11:$Vd,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),o($Vp,[2,11],{9:$Vb,11:$Vd,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),o($Vp,[2,10],{9:$Vb,11:$Vd,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),o($Vl,[2,22]),{2:11,4:75,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},{2:11,4:76,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:$V5,25:$V6,26:$V7,31:$V8,33:$V9,35:$Va},o($Vr,[2,40],{9:$Vb,10:$Vc,11:$Vd,14:$Ve,15:$Vf,16:$Vg,17:$Vh,18:$Vi,19:$Vj,20:$Vk}),o($Vr,[2,41],{9:$Vb,10:$Vc,11:$Vd,14:$Ve,15:$Vf,16:$Vg,17:$Vh,18:$Vi,19:$Vj,20:$Vk})],
-defaultActions: {18:[2,1]},
+table: [{2:14,3:1,4:2,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{1:[3]},{5:[1,22],9:$Vc,10:$Vd,11:$Ve,14:$Vf,15:$Vg,16:$Vh,17:$Vi,18:$Vj,19:$Vk,20:$Vl},o($Vm,[2,2],{37:[1,33]}),o($Vm,[2,3],{39:[1,34]}),o($Vm,[2,4]),{2:14,4:35,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:36,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:37,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{12:[1,38]},o($Vm,[2,23]),o($Vm,[2,24]),o($Vm,[2,25]),o($Vm,[2,26]),o($Vm,[2,27],{2:39,40:$Vb}),o($Vn,[2,57]),o($Vo,[2,59],{37:[1,40]}),o($Vm,[2,29],{32:[1,41]}),o($Vm,[2,30],{32:[1,42]}),o($Vm,[2,31],{32:[1,43]}),{31:[1,44]},o([5,9,10,11,13,14,15,16,17,18,19,20,34,35,40],[2,62]),{1:[2,1]},{2:14,4:45,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:46,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:47,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:50,6:3,7:4,8:$V0,10:[1,48],11:$V1,12:$V2,15:[1,49],17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:52,6:3,7:4,8:$V0,10:[1,51],11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:53,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:54,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:55,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:56,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:57,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{36:[1,58]},o($Vo,[2,61]),{9:$Vc,10:$Vd,11:$Ve,13:[1,59],14:$Vf,15:$Vg,16:$Vh,17:$Vi,18:$Vj,19:$Vk,20:$Vl},o($Vp,[2,19],{9:$Vc,18:$Vj,19:$Vk,20:$Vl}),o($Vp,[2,20],{9:$Vc,18:$Vj,19:$Vk,20:$Vl}),{2:14,4:62,6:3,7:4,8:$V0,11:$V1,12:$V2,13:[1,60],17:$V3,21:$V4,22:61,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,33:[1,63],36:$V9,38:$Va,40:$Vb},o($Vm,[2,28]),{38:[1,64]},{27:[1,65],28:[1,66],29:[1,67]},{27:[1,68],28:[1,69],29:[1,70]},{27:[1,71],28:[1,72],29:[1,73]},{27:[1,74],28:[1,75],29:[1,76]},o($Vm,[2,5]),o([5,10,13,34,35],[2,6],{9:$Vc,11:$Ve,14:$Vf,15:$Vg,16:$Vh,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o($Vp,[2,7],{9:$Vc,18:$Vj,19:$Vk,20:$Vl}),{2:14,4:77,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:78,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},o($Vq,[2,14],{9:$Vc,11:$Ve,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),{2:14,4:79,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},o($Vq,[2,13],{9:$Vc,11:$Ve,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o([5,10,13,16,34,35],[2,12],{9:$Vc,11:$Ve,14:$Vf,15:$Vg,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o($Vp,[2,15],{9:$Vc,18:$Vj,19:$Vk,20:$Vl}),o($Vr,[2,16],{9:$Vc,20:$Vl}),o($Vr,[2,17],{9:$Vc,20:$Vl}),o([5,10,11,13,14,15,16,17,18,19,20,34,35],[2,18],{9:$Vc}),o($Vn,[2,58]),o($Vm,[2,8]),o($Vm,[2,21]),{13:[1,80],34:[1,81],35:[1,82]},o($Vs,[2,53],{9:$Vc,10:$Vd,11:$Ve,14:$Vf,15:$Vg,16:$Vh,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o($Vs,[2,54]),o($Vo,[2,60]),o($Vm,[2,35]),o($Vm,[2,36]),o($Vm,[2,37]),o($Vm,[2,38]),o($Vm,[2,39]),o($Vm,[2,40]),o($Vm,[2,41]),o($Vm,[2,42]),o($Vm,[2,43]),o($Vm,[2,32],{32:[1,83]}),o($Vm,[2,33],{32:[1,84]}),o($Vm,[2,34],{32:[1,85]}),o($Vq,[2,9],{9:$Vc,11:$Ve,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o($Vq,[2,11],{9:$Vc,11:$Ve,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o($Vq,[2,10],{9:$Vc,11:$Ve,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o($Vm,[2,22]),{2:14,4:86,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{2:14,4:87,6:3,7:4,8:$V0,11:$V1,12:$V2,17:$V3,21:$V4,23:10,24:11,25:12,26:13,27:$V5,28:$V6,29:$V7,30:$V8,36:$V9,38:$Va,40:$Vb},{27:[1,88],28:[1,89],29:[1,90]},{27:[1,91],28:[1,92],29:[1,93]},{27:[1,94],28:[1,95],29:[1,96]},o($Vs,[2,55],{9:$Vc,10:$Vd,11:$Ve,14:$Vf,15:$Vg,16:$Vh,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o($Vs,[2,56],{9:$Vc,10:$Vd,11:$Ve,14:$Vf,15:$Vg,16:$Vh,17:$Vi,18:$Vj,19:$Vk,20:$Vl}),o($Vm,[2,44]),o($Vm,[2,45]),o($Vm,[2,46]),o($Vm,[2,47]),o($Vm,[2,48]),o($Vm,[2,49]),o($Vm,[2,50]),o($Vm,[2,51]),o($Vm,[2,52])],
+defaultActions: {22:[2,1]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
     } else {
-        function _parseError (msg, hash) {
-            this.message = msg;
-            this.hash = hash;
-        }
-        _parseError.prototype = Error;
-
-        throw new _parseError(str, hash);
+        var error = new Error(str);
+        error.hash = hash;
+        throw error;
     }
 },
 parse: function parse(input) {
@@ -15763,6 +15777,7 @@ parse: function parse(input) {
         lstack.length = lstack.length - n;
     }
 
+_token_stack:
     var lex = function () {
         var token;
         token = lexer.lex() || EOF;
@@ -15789,6 +15804,7 @@ parse: function parse(input) {
             action = table[state] && table[state][symbol];
         }
 
+_handle_error:
         // handle parse error
         if (typeof action === 'undefined' || !action.length || !action[0]) {
             var error_rule_depth;
@@ -16286,76 +16302,78 @@ case 2:return 8;
 break;
 case 3:return 21;
 break;
-case 4:return 35;
+case 4:return 40;
 break;
-case 5:return 24;
+case 5:return 27;
 break;
-case 6:return 26;
+case 6:return 29;
 break;
-case 7:return 26;
+case 7:return 29;
 break;
-case 8:return 25;
+case 8:return 28;
 break;
-case 9:return 21;
+case 9:return 30;
 break;
-case 10:return 31;
+case 10:return 21;
 break;
-case 11:return 31;
+case 11:return 36;
 break;
-case 12:return 33;
+case 12:return 36;
 break;
-case 13:return 28;
+case 13:return 38;
 break;
-case 14:return 9;
+case 14:return 33;
 break;
-case 15:return ' ';
+case 15:return 9;
 break;
-case 16:return 32;
+case 16:return ' ';
 break;
-case 17:return 27;
+case 17:return 37;
 break;
-case 18:return 29;
+case 18:return 32;
 break;
-case 19:return 30;
+case 19:return 34;
 break;
-case 20:return 18;
+case 20:return 35;
 break;
-case 21:return 19;
+case 21:return 18;
 break;
-case 22:return 17;
+case 22:return 19;
 break;
-case 23:return 11;
+case 23:return 17;
 break;
-case 24:return 20;
+case 24:return 11;
 break;
-case 25:return 12;
+case 25:return 20;
 break;
-case 26:return 13;
+case 26:return 12;
 break;
-case 27:return 15;
+case 27:return 13;
 break;
-case 28:return 14;
+case 28:return 15;
 break;
-case 29:return 16;
+case 29:return 14;
 break;
-case 30:return '"';
+case 30:return 16;
 break;
-case 31:return "'";
+case 31:return '"';
 break;
-case 32:return "!";
+case 32:return "'";
 break;
-case 33:return 10;
+case 33:return "!";
 break;
-case 34:return 34;
+case 34:return 10;
 break;
-case 35:return '#';
+case 35:return 39;
 break;
-case 36:return 5;
+case 36:return '#';
+break;
+case 37:return 5;
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:"(\\["]|[^"])*")/,/^(?:'(\\[']|[^'])*')/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9\.]+(?=[(]))/,/^(?:#[A-Z0-9\/]+(!|\?)?)/,/^(?:\$[A-Za-z]+\$[0-9]+)/,/^(?:\$[A-Za-z]+[0-9]+)/,/^(?:[A-Za-z]+\$[0-9]+)/,/^(?:[A-Za-z]+[0-9]+)/,/^(?:[A-Za-z\.]+(?=[(]))/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/,/^(?:[A-Za-z_]+)/,/^(?:[0-9]+)/,/^(?:\[(.*)?\])/,/^(?:&)/,/^(?: )/,/^(?:[.])/,/^(?::)/,/^(?:;)/,/^(?:,)/,/^(?:\*)/,/^(?:\/)/,/^(?:-)/,/^(?:\+)/,/^(?:\^)/,/^(?:\()/,/^(?:\))/,/^(?:>)/,/^(?:<)/,/^(?:NOT\b)/,/^(?:")/,/^(?:')/,/^(?:!)/,/^(?:=)/,/^(?:%)/,/^(?:[#])/,/^(?:$)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:"(\\["]|[^"])*")/,/^(?:'(\\[']|[^'])*')/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9\.]+(?=[(]))/,/^(?:#[A-Z0-9\/]+(!|\?)?)/,/^(?:\$[A-Za-z]+\$[0-9]+)/,/^(?:\$[A-Za-z]+[0-9]+)/,/^(?:[A-Za-z]+\$[0-9]+)/,/^(?:[A-Za-z]+[0-9]+)/,/^(?:[A-Za-z_\.\d]+(?=[!]))/,/^(?:[A-Za-z\.]+(?=[(]))/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/,/^(?:[A-Za-z_]+)/,/^(?:[0-9]+)/,/^(?:\[(.*)?\])/,/^(?:&)/,/^(?: )/,/^(?:[.])/,/^(?::)/,/^(?:;)/,/^(?:,)/,/^(?:\*)/,/^(?:\/)/,/^(?:-)/,/^(?:\+)/,/^(?:\^)/,/^(?:\()/,/^(?:\))/,/^(?:>)/,/^(?:<)/,/^(?:NOT\b)/,/^(?:")/,/^(?:')/,/^(?:!)/,/^(?:=)/,/^(?:%)/,/^(?:[#])/,/^(?:$)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37],"inclusive":true}}
 });
 return lexer;
 })();
@@ -16372,12 +16390,19 @@ if (true) {
 exports.parser = grammarParser;
 exports.Parser = grammarParser.Parser;
 exports.parse = function () { return grammarParser.parse.apply(grammarParser, arguments); };
+exports.main = function commonjsMain(args) {
+    if (!args[1]) {
+        console.log('Usage: '+args[0]+' FILE');
+        process.exit(1);
+    }
+    var source = __webpack_require__(43).readFileSync(__webpack_require__(44).normalize(args[1]), "utf8");
+    return exports.parser.parse(source);
+};
 if (typeof module !== 'undefined' && __webpack_require__.c[__webpack_require__.s] === module) {
   exports.main(process.argv.slice(1));
 }
 }
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(42)(module), __webpack_require__(10)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(42)(module)))
 
 /***/ }),
 /* 42 */
@@ -16409,6 +16434,243 @@ module.exports = function(module) {
 
 /***/ }),
 /* 43 */
+/***/ (function(module, exports) {
+
+
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+
+/***/ }),
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
