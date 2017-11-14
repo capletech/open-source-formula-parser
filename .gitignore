@@ -1,0 +1,10 @@
+node_modules
+coverage
+*.tgz
+*.log
+.idea
+tmp/
+lib
+es
+
+dev.html
