@@ -13,7 +13,7 @@ describe('.parse() coordinates', () => {
       cellCoord = _cellCoord;
 
       // Return different value for sheets so we can differentiate on this in the assertions
-      if (cellCoord.sheet === 'SHEET') {
+      if (cellCoord.sheet === 'SHEET' || cellCoord.sheet === 'SHE ET') {
         done(66);
       } else {
         done(55);
@@ -63,6 +63,26 @@ describe('.parse() coordinates', () => {
       row: {index: 0, isAbsolute: false, label: '1'},
       column: {index: 0, isAbsolute: false, label: 'A'},
       sheet: 'SHEET',
+    });
+  });
+
+  it('should parse sheets with quotes', () => {
+    expect(parser.parse('\'SHEET\'!A1')).toMatchObject({error: null, result: 66});
+    expect(cellCoord).toMatchObject({
+      label: 'A1',
+      row: {index: 0, isAbsolute: false, label: '1'},
+      column: {index: 0, isAbsolute: false, label: 'A'},
+      sheet: 'SHEET',
+    });
+  });
+
+  it('should parse sheets with quotes and spaces', () => {
+    expect(parser.parse('\'SHE ET\'!A1')).toMatchObject({error: null, result: 66});
+    expect(cellCoord).toMatchObject({
+      label: 'A1',
+      row: {index: 0, isAbsolute: false, label: '1'},
+      column: {index: 0, isAbsolute: false, label: 'A'},
+      sheet: 'SHE ET',
     });
   });
 

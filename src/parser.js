@@ -19,6 +19,7 @@ class Parser extends Emitter {
       invertNumber,
       throwError: (errorName) => this._throwError(errorName),
       callVariable: (variable) => this._callVariable(variable),
+      removeQuotes: (value) => this._removeQuotes(value),
       evaluateByOperator,
       callFunction: (name, params) => this._callFunction(name, params),
       cellValue: (value, sheet) => this._callCellValue(value, sheet),
@@ -114,6 +115,16 @@ class Parser extends Emitter {
     }
 
     return value;
+  }
+
+  /**
+   * Remove all single quotes from a string.
+   *
+   * @param value
+   * @private
+   */
+  _removeQuotes(value) {
+    return value.replace(/'/g, '');
   }
 
   /**

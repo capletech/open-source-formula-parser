@@ -3,15 +3,16 @@
 %lex
 %%
 \s+                                                                                             {/* skip whitespace */}
-'"'("\\"["]|[^"])*'"'                                                                           {return 'STRING';}
-"'"('\\'[']|[^'])*"'"                                                                           {return 'STRING';}
+'"'("\\"["]|[^"])*'"'(?!\!)                                                                     {return 'STRING';}
+"'"('\\'[']|[^'])*"'"(?!\!)                                                                     {return 'STRING';}
 [A-Za-z]{1,}[A-Za-z_0-9\.]+(?=[(])                                                              {return 'FUNCTION';}
 '#'[A-Z0-9\/]+('!'|'?')?                                                                        {return 'ERROR';}
 '$'[A-Za-z]+'$'[0-9]+                                                                           {return 'ABSOLUTE_CELL';}
 '$'[A-Za-z]+[0-9]+                                                                              {return 'MIXED_CELL';}
 [A-Za-z]+'$'[0-9]+                                                                              {return 'MIXED_CELL';}
 [A-Za-z]+[0-9]+                                                                                 {return 'RELATIVE_CELL';}
-[A-Za-z_\.\d]+(?=[!])                                                                           {return 'REFSHEET';}
+[A-Za-z_\.\d ]+(?=[!])                                                                          {return 'REFSHEET';}
+\'[A-Za-z_\.\d ]+\'(?=[!])                                                                      {return 'REFSHEET_QUOTED';}
 [A-Za-z\.]+(?=[(])                                                                              {return 'FUNCTION';}
 [A-Za-z]{1,}[A-Za-z_0-9]+                                                                       {return 'VARIABLE';}
 [A-Za-z_]+                                                                                      {return 'VARIABLE';}
@@ -170,6 +171,16 @@ refCell
   | REFSHEET '!' MIXED_CELL {
       $$ = yy.cellValue($3, $1);
     }
+  | REFSHEET_QUOTED '!' ABSOLUTE_CELL {
+      $$ = yy.cellValue($3, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' RELATIVE_CELL {
+      $$ = yy.cellValue($3, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' MIXED_CELL {
+      $$ = yy.cellValue($3, yy.removeQuotes($1));
+    }
+
 ;
 
 range
@@ -229,6 +240,33 @@ refRange
     }
   | REFSHEET '!' MIXED_CELL ':' MIXED_CELL {
       $$ = yy.rangeValue($3, $5, $1);
+    }
+  | REFSHEET_QUOTED '!' ABSOLUTE_CELL ':' ABSOLUTE_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' ABSOLUTE_CELL ':' RELATIVE_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' ABSOLUTE_CELL ':' MIXED_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' RELATIVE_CELL ':' ABSOLUTE_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' RELATIVE_CELL ':' RELATIVE_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' RELATIVE_CELL ':' MIXED_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' MIXED_CELL ':' ABSOLUTE_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' MIXED_CELL ':' RELATIVE_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
+    }
+  | REFSHEET_QUOTED '!' MIXED_CELL ':' MIXED_CELL {
+      $$ = yy.rangeValue($3, $5, yy.removeQuotes($1));
     }
 ;
 
